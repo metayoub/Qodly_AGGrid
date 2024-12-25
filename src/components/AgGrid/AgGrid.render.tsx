@@ -13,6 +13,7 @@ import { AgGridReact } from 'ag-grid-react';
 import { IAgGridProps } from './AgGrid.config';
 import { ColDef, GridReadyEvent, IGetRowsParams, SortModelItem } from 'ag-grid-community';
 import isEqual from 'lodash/isEqual';
+import CustomCell from './CustomCell';
 
 const AgGrid: FC<IAgGridProps> = ({ columns, style, className, classNames = [] }) => {
   const { connect } = useRenderer();
@@ -28,15 +29,34 @@ const AgGrid: FC<IAgGridProps> = ({ columns, style, className, classNames = [] }
   const [selected, setSelected] = useState(-1);
   const [_scrollIndex, setScrollIndex] = useState(0);
   const [count, setCount] = useState(0);
-  const colDefs: ColDef[] = columns.map((col) => ({ field: col.title }));
+  const colDefs: ColDef[] = columns.map((col) => ({
+    field: col.title,
+    cellRenderer: CustomCell,
+    cellRendererParams: {
+      format: col.format,
+      dataType: col.dataType,
+    },
+    sortable: col.sorting,
+    resizable: col.sizing,
+    width: col.width,
+    flex: col.flex,
+    filter:
+      col.filtering &&
+      (col.dataType === 'text' || col.dataType === 'string'
+        ? 'agTextColumnFilter'
+        : col.dataType === 'long' || col.dataType === 'number'
+          ? 'agNumberColumnFilter'
+          : col.dataType === 'date'
+            ? 'agDateColumnFilter'
+            : false),
+  }));
   const defaultColDef = useMemo<ColDef>(() => {
     return {
-      flex: 1,
       minWidth: 100,
-      sortable: true,
+      sortingOrder: ['asc', 'desc'],
     };
   }, []);
-
+  console.log('columns', columns);
   const { updateCurrentDsValue } = useDsChangeHandler({
     source: datasource,
     currentDs: currentElement,

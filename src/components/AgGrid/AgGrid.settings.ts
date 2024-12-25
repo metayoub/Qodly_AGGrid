@@ -43,10 +43,22 @@ const commonSettings: TSetting[] = [
         key: 'width',
       },
       {
+        label: 'Flex',
+        type: ESetting.NUMBER_FIELD,
+        defaultValue: 1,
+        key: 'flex',
+      },
+      {
         label: 'Enable Sorting',
         defaultValue: false,
         type: ESetting.CHECKBOX,
         key: 'sorting',
+      },
+      {
+        label: 'Enable filtering',
+        defaultValue: false,
+        type: ESetting.CHECKBOX,
+        key: 'filtering',
       },
       {
         label: 'Enable Hiding',

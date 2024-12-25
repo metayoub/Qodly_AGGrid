@@ -154,7 +154,9 @@ export default {
                     title: capitalize(item.attribute.name),
                     source: item.attribute.name,
                     width: 150,
+                    flex: 1,
                     sorting: false,
+                    filtering: false,
                     hidden: true,
                     sizing: true,
                     id: generate(),
@@ -202,11 +204,12 @@ export interface IColumn {
   title: string;
   source: string;
   sorting: boolean;
+  filtering: boolean;
   hidden: boolean;
   sizing: boolean;
   width: number;
-  initialWidth?: number | string;
   format: string;
   id: string;
   dataType: string;
+  flex: number;
 }
