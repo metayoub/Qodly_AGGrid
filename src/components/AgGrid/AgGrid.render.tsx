@@ -8,10 +8,10 @@ import {
   useEnhancedNode,
 } from '@ws-ui/webform-editor';
 import cn from 'classnames';
-import { FC, useCallback, useEffect, useState } from 'react';
+import { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AgGridReact } from 'ag-grid-react';
 import { IAgGridProps } from './AgGrid.config';
-import { ColDef } from 'ag-grid-community';
+import { ColDef, GridReadyEvent, IGetRowsParams } from 'ag-grid-community';
 
 const AgGrid: FC<IAgGridProps> = ({ columns, style, className, classNames = [] }) => {
   const { connect } = useRenderer();
@@ -19,16 +19,21 @@ const AgGrid: FC<IAgGridProps> = ({ columns, style, className, classNames = [] }
     sources: { datasource, currentElement },
   } = useSources({ acceptIteratorSel: true });
   const { id: nodeID } = useEnhancedNode();
-
-  const { entities, fetchIndex, page } = useDataLoader({
+  const rowDataRef = useRef<any[]>([]);
+  const { fetchIndex } = useDataLoader({
     source: datasource,
   });
-
-  const [rowData, setRowData] = useState<any[]>([]);
   const [selected, setSelected] = useState(-1);
   const [_scrollIndex, setScrollIndex] = useState(0);
   const [count, setCount] = useState(0);
   const colDefs: ColDef[] = columns.map((col) => ({ field: col.title }));
+  const defaultColDef = useMemo<ColDef>(() => {
+    return {
+      flex: 1,
+      minWidth: 100,
+      sortable: false,
+    };
+  }, []);
 
   const { updateCurrentDsValue } = useDsChangeHandler({
     source: datasource,
@@ -74,20 +79,6 @@ const AgGrid: FC<IAgGridProps> = ({ columns, style, className, classNames = [] }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [datasource]);
 
-  useEffect(() => {
-    if (page.fetching) return;
-
-    setRowData(
-      entities.map((data: any) => {
-        const row: any = {};
-        columns.forEach((col) => {
-          row[col.title] = data[col.source];
-        });
-        return row;
-      }),
-    );
-  }, [entities]);
-
   const selectRow = useCallback(async (event: any) => {
     if (!datasource || !currentElement) return;
     await updateCurrentDsValue({
@@ -102,13 +93,44 @@ const AgGrid: FC<IAgGridProps> = ({ columns, style, className, classNames = [] }
     return undefined;
   };
 
+  const onGridReady = useCallback(
+    (params: GridReadyEvent) => {
+      params.api.setGridOption('datasource', {
+        getRows: async (params: IGetRowsParams) => {
+          const entities = await fetchIndex(params.startRow);
+          rowDataRef.current = entities.map((data: any) => {
+            const row: any = {};
+            columns.forEach((col) => {
+              row[col.title] = data[col.source];
+            });
+            return row;
+          });
+          if (Array.isArray(entities)) {
+            params.successCallback(rowDataRef.current, count);
+          } else {
+            params.failCallback();
+          }
+        },
+      });
+    },
+    [count],
+  );
+
   return (
     <div ref={connect} style={style} className={cn(className, classNames)}>
       <AgGridReact
-        rowData={rowData}
         columnDefs={colDefs}
+        defaultColDef={defaultColDef}
         onRowClicked={selectRow}
         getRowStyle={getRowStyle}
+        onGridReady={onGridReady}
+        rowModelType="infinite"
+        cacheBlockSize={100}
+        maxBlocksInCache={10}
+        cacheOverflowSize={2}
+        maxConcurrentDatasourceRequests={1}
+        infiniteInitialRowCount={count}
+        rowBuffer={0}
       />
     </div>
   );
