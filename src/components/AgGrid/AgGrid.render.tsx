@@ -11,7 +11,8 @@ import cn from 'classnames';
 import { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AgGridReact } from 'ag-grid-react';
 import { IAgGridProps } from './AgGrid.config';
-import { ColDef, GridReadyEvent, IGetRowsParams } from 'ag-grid-community';
+import { ColDef, GridReadyEvent, IGetRowsParams, SortModelItem } from 'ag-grid-community';
+import isEqual from 'lodash/isEqual';
 
 const AgGrid: FC<IAgGridProps> = ({ columns, style, className, classNames = [] }) => {
   const { connect } = useRenderer();
@@ -20,6 +21,7 @@ const AgGrid: FC<IAgGridProps> = ({ columns, style, className, classNames = [] }
   } = useSources({ acceptIteratorSel: true });
   const { id: nodeID } = useEnhancedNode();
   const rowDataRef = useRef<any[]>([]);
+  const prevSortModelRef = useRef<SortModelItem[]>([]);
   const { fetchIndex } = useDataLoader({
     source: datasource,
   });
@@ -31,7 +33,7 @@ const AgGrid: FC<IAgGridProps> = ({ columns, style, className, classNames = [] }
     return {
       flex: 1,
       minWidth: 100,
-      sortable: false,
+      sortable: true,
     };
   }, []);
 
@@ -97,6 +99,13 @@ const AgGrid: FC<IAgGridProps> = ({ columns, style, className, classNames = [] }
     (params: GridReadyEvent) => {
       params.api.setGridOption('datasource', {
         getRows: async (params: IGetRowsParams) => {
+          if (params.sortModel.length > 0 && !isEqual(params.sortModel, prevSortModelRef.current)) {
+            prevSortModelRef.current = params.sortModel;
+            const sortingString = params.sortModel
+              .map((sort) => `${columns.find((c) => c.title === sort.colId)?.source} ${sort.sort}`)
+              .join(', ');
+            await datasource.orderBy(sortingString); // need more optimsations because each fetch create a new entity selection
+          }
           const entities = await fetchIndex(params.startRow);
           rowDataRef.current = entities.map((data: any) => {
             const row: any = {};
