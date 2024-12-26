@@ -48,37 +48,36 @@ export default {
   },
   info: {
     settings: AgGridSettings,
+    sanityCheck: {
+      keys: [
+        { name: 'datasource', require: true, isDatasource: true },
+        { name: 'currentElement', require: false, isDatasource: false },
+        { name: 'state', require: false, isDatasource: false },
+      ],
+    },
     displayName: 'AgGrid',
     exposed: true,
     icon: MdOutlineGridOn,
     events: [
       {
+        label: 'On Select',
+        value: 'onselect',
+      },
+      {
         label: 'On Click',
         value: 'onclick',
       },
       {
-        label: 'On Blur',
-        value: 'onblur',
+        label: 'On HeaderClick',
+        value: 'onheaderclick',
       },
       {
-        label: 'On Focus',
-        value: 'onfocus',
+        label: 'On CellClick',
+        value: 'oncellclick',
       },
       {
-        label: 'On MouseEnter',
-        value: 'onmouseenter',
-      },
-      {
-        label: 'On MouseLeave',
-        value: 'onmouseleave',
-      },
-      {
-        label: 'On KeyDown',
-        value: 'onkeydown',
-      },
-      {
-        label: 'On KeyUp',
-        value: 'onkeyup',
+        label: 'On SaveState',
+        value: 'onsavestate',
       },
     ],
     datasources: {
@@ -188,7 +187,7 @@ export default {
   },
   defaultProps: {
     columns: [],
-    name: 'Qodly', // delete it
+    state: '',
     style: {
       height: '300px',
     },
@@ -197,7 +196,7 @@ export default {
 
 export interface IAgGridProps extends webforms.ComponentProps {
   columns: IColumn[];
-  name?: string; // delete it
+  state?: string;
 }
 
 export interface IColumn {

@@ -6,17 +6,27 @@ import {
   entitySubject,
   EntityActions,
   useEnhancedNode,
+  useWebformPath,
 } from '@ws-ui/webform-editor';
 import cn from 'classnames';
 import { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AgGridReact } from 'ag-grid-react';
 import { IAgGridProps } from './AgGrid.config';
-import { ColDef, GridReadyEvent, IGetRowsParams, SortModelItem } from 'ag-grid-community';
+import {
+  ColDef,
+  GridReadyEvent,
+  IGetRowsParams,
+  RowClassParams,
+  SortModelItem,
+  StateUpdatedEvent,
+} from 'ag-grid-community';
 import isEqual from 'lodash/isEqual';
 import CustomCell from './CustomCell';
 
-const AgGrid: FC<IAgGridProps> = ({ columns, style, className, classNames = [] }) => {
-  const { connect } = useRenderer();
+const AgGrid: FC<IAgGridProps> = ({ columns, state, style, className, classNames = [] }) => {
+  const { connect, emit } = useRenderer({
+    omittedEvents: ['onselect', 'onclick', 'onheaderclick', 'oncellclick', 'onsavestate'],
+  });
   const {
     sources: { datasource, currentElement },
   } = useSources({ acceptIteratorSel: true });
@@ -26,37 +36,44 @@ const AgGrid: FC<IAgGridProps> = ({ columns, style, className, classNames = [] }
   const { fetchIndex } = useDataLoader({
     source: datasource,
   });
+  const path = useWebformPath();
+  const stateDS = window.DataSource.getSource(state, path);
   const [selected, setSelected] = useState(-1);
   const [_scrollIndex, setScrollIndex] = useState(0);
   const [count, setCount] = useState(0);
-  const colDefs: ColDef[] = columns.map((col) => ({
-    field: col.title,
-    cellRenderer: CustomCell,
-    cellRendererParams: {
-      format: col.format,
-      dataType: col.dataType,
-    },
-    sortable: col.sorting,
-    resizable: col.sizing,
-    width: col.width,
-    flex: col.flex,
-    filter:
-      col.filtering &&
-      (col.dataType === 'text' || col.dataType === 'string'
-        ? 'agTextColumnFilter'
-        : col.dataType === 'long' || col.dataType === 'number'
-          ? 'agNumberColumnFilter'
-          : col.dataType === 'date'
-            ? 'agDateColumnFilter'
-            : false),
-  }));
+  const colDefs: ColDef[] = useMemo(
+    () =>
+      columns.map((col) => ({
+        field: col.title,
+        cellRendererParams: {
+          format: col.format,
+          dataType: col.dataType,
+        },
+        sortable: col.sorting,
+        resizable: col.sizing,
+        width: col.width,
+        flex: col.flex,
+        filter:
+          col.filtering &&
+          (col.dataType === 'text' || col.dataType === 'string'
+            ? 'agTextColumnFilter'
+            : col.dataType === 'long' || col.dataType === 'number'
+              ? 'agNumberColumnFilter'
+              : col.dataType === 'date'
+                ? 'agDateColumnFilter'
+                : false),
+      })),
+    [],
+  );
+
   const defaultColDef = useMemo<ColDef>(() => {
     return {
       minWidth: 100,
       sortingOrder: ['asc', 'desc'],
+      cellRenderer: CustomCell,
     };
   }, []);
-  console.log('columns', columns);
+
   const { updateCurrentDsValue } = useDsChangeHandler({
     source: datasource,
     currentDs: currentElement,
@@ -106,25 +123,60 @@ const AgGrid: FC<IAgGridProps> = ({ columns, style, className, classNames = [] }
     await updateCurrentDsValue({
       index: event.rowIndex,
     });
+    emit('onselect');
   }, []);
 
-  const getRowStyle = (params: any) => {
-    if (params.node.rowIndex === selected) {
-      return { backgroundColor: 'lightblue' }; // TODO: make this configurable
+  const selectCell = useCallback((event: any) => {
+    emit('oncellclick', {
+      column: event.column.getColId(),
+      value: event.value,
+    });
+  }, []);
+
+  const selectHeader = useCallback((event: any) => {
+    emit('onheaderclick', {
+      column: event.column,
+    });
+  }, []);
+
+  const getRowStyle = useCallback(
+    (params: RowClassParams) => {
+      if (params.node.rowIndex === selected) {
+        return { backgroundColor: 'lightblue' }; // TODO: make this configurable
+      }
+      return undefined;
+    },
+    [selected],
+  );
+
+  const stateUpdated = useCallback((params: StateUpdatedEvent) => {
+    if (stateDS && params.type === 'stateUpdated') {
+      stateDS.setValue(null, params.api.getColumnState());
+      emit('onsavestate', params.api.getColumnState());
     }
-    return undefined;
-  };
+  }, []);
+
+  const getState = useCallback(async (params: GridReadyEvent) => {
+    if (stateDS) {
+      const dsValue = await stateDS?.value;
+      params.api.applyColumnState({ state: dsValue });
+    }
+  }, []);
 
   const onGridReady = useCallback(
     (params: GridReadyEvent) => {
+      getState(params);
       params.api.setGridOption('datasource', {
         getRows: async (params: IGetRowsParams) => {
+          if (!isEqual(params.filterModel, {})) {
+            //TODO: foreach key in filterModel, apply filter
+          }
           if (params.sortModel.length > 0 && !isEqual(params.sortModel, prevSortModelRef.current)) {
             prevSortModelRef.current = params.sortModel;
             const sortingString = params.sortModel
               .map((sort) => `${columns.find((c) => c.title === sort.colId)?.source} ${sort.sort}`)
               .join(', ');
-            await datasource.orderBy(sortingString); // need more optimsations because each fetch create a new entity selection
+            await datasource.orderBy(sortingString);
           }
           const entities = await fetchIndex(params.startRow);
           rowDataRef.current = entities.map((data: any) => {
@@ -160,6 +212,9 @@ const AgGrid: FC<IAgGridProps> = ({ columns, style, className, classNames = [] }
         maxConcurrentDatasourceRequests={1}
         infiniteInitialRowCount={count}
         rowBuffer={0}
+        onStateUpdated={stateUpdated}
+        onCellClicked={selectCell}
+        onColumnHeaderClicked={selectHeader}
       />
     </div>
   );

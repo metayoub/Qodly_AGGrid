@@ -1,15 +1,14 @@
 import { formatValue } from '@ws-ui/webform-editor';
 import { MdCheck, MdClose } from 'react-icons/md';
-// import { DataType, getStyle } from '@ws-ui/formatter';
+//import { DataType, getStyle } from '@ws-ui/formatter';
 
 const CustomCell = ({ format, dataType, value }: { format: any; dataType: string; value: any }) => {
-  console.log('CustomCell', format, dataType, value);
   switch (true) {
     case value && typeof value === 'object' && !(value instanceof Date):
       return (
         <>
           {value?.__deferred?.image ? (
-            <img className="image w-fit h-fit" src={value?.__deferred?.uri} alt="" />
+            <img className="image h-full" src={value?.__deferred?.uri} alt="" />
           ) : (
             JSON.stringify(value)
           )}
@@ -30,7 +29,7 @@ const CustomCell = ({ format, dataType, value }: { format: any; dataType: string
             ? formatValue(value, dataType, format)
             : value.toString()
           : value;
-      // const customStyle = format ? getStyle(dataType as DataType, format, value) : {};
+      //const customStyle = format ? getStyle(dataType as DataType, format, value) : {};
 
       return <div /*style={customStyle}*/ className="cell whitespace-nowrap">{customValue}</div>;
   }
