@@ -7,6 +7,7 @@ import {
   EntityActions,
   useEnhancedNode,
   useWebformPath,
+  dateTo4DFormat,
 } from '@ws-ui/webform-editor';
 import cn from 'classnames';
 import { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -21,6 +22,7 @@ import {
   StateUpdatedEvent,
 } from 'ag-grid-community';
 import isEqual from 'lodash/isEqual';
+import cloneDeep from 'lodash/cloneDeep';
 import CustomCell from './CustomCell';
 
 const AgGrid: FC<IAgGridProps> = ({ columns, state, style, className, classNames = [] }) => {
@@ -28,16 +30,30 @@ const AgGrid: FC<IAgGridProps> = ({ columns, state, style, className, classNames
     omittedEvents: ['onselect', 'onclick', 'onheaderclick', 'oncellclick', 'onsavestate'],
   });
   const {
-    sources: { datasource, currentElement },
+    sources: { datasource: ds, currentElement },
   } = useSources({ acceptIteratorSel: true });
   const { id: nodeID } = useEnhancedNode();
-  const rowDataRef = useRef<any[]>([]);
   const prevSortModelRef = useRef<SortModelItem[]>([]);
+  const searchDs = useMemo(() => {
+    if (ds) {
+      const clone: any = cloneDeep(ds);
+      clone.id = `${clone.id}_clone`;
+      clone.children = {};
+      return clone;
+    }
+    return null;
+  }, [ds?.id, (ds as any)?.entitysel]);
+
   const { fetchIndex } = useDataLoader({
-    source: datasource,
+    source: ds,
   });
+
+  const { fetchIndex: fetchIndexClone } = useDataLoader({
+    source: searchDs,
+  });
+
   const path = useWebformPath();
-  const stateDS = window.DataSource.getSource(state, path);
+  const stateDS = (window as any).DataSource.getSource(state, path);
   const [selected, setSelected] = useState(-1);
   const [_scrollIndex, setScrollIndex] = useState(0);
   const [count, setCount] = useState(0);
@@ -62,6 +78,25 @@ const AgGrid: FC<IAgGridProps> = ({ columns, state, style, className, classNames
               : col.dataType === 'date'
                 ? 'agDateColumnFilter'
                 : false),
+        filterParams: {
+          filterOptions:
+            col.dataType === 'text' || col.dataType === 'string'
+              ? ['contains', 'equals', 'notEqual', 'startsWith', 'endsWith']
+              : col.dataType === 'long' || col.dataType === 'number'
+                ? [
+                    'equals',
+                    'notEqual',
+                    'greaterThan',
+                    'greaterThanOrEqual',
+                    'lessThan',
+                    'lessThanOrEqual',
+                    'inRange',
+                  ]
+                : col.dataType === 'date'
+                  ? ['equals', 'notEqual', 'greaterThan', 'lessThan', 'inRange']
+                  : [],
+          defaultOption: 'equals',
+        },
       })),
     [],
   );
@@ -75,7 +110,7 @@ const AgGrid: FC<IAgGridProps> = ({ columns, state, style, className, classNames
   }, []);
 
   const { updateCurrentDsValue } = useDsChangeHandler({
-    source: datasource,
+    source: ds,
     currentDs: currentElement,
     selected,
     setSelected,
@@ -102,7 +137,7 @@ const AgGrid: FC<IAgGridProps> = ({ columns, state, style, className, classNames
   });
 
   useEffect(() => {
-    if (!datasource) return;
+    if (!ds) return;
 
     const listener = async (/* event */) => {
       await fetchIndex(0);
@@ -110,16 +145,16 @@ const AgGrid: FC<IAgGridProps> = ({ columns, state, style, className, classNames
 
     listener();
 
-    datasource.addListener('changed', listener);
+    ds.addListener('changed', listener);
 
     return () => {
-      datasource.removeListener('changed', listener);
+      ds.removeListener('changed', listener);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [datasource]);
+  }, [ds]);
 
   const selectRow = useCallback(async (event: any) => {
-    if (!datasource || !currentElement) return;
+    if (!ds || !currentElement) return;
     await updateCurrentDsValue({
       index: event.rowIndex,
     });
@@ -163,31 +198,139 @@ const AgGrid: FC<IAgGridProps> = ({ columns, state, style, className, classNames
     }
   }, []);
 
+  const buildFilterQuery = (filter: any, source: string): string => {
+    const filterType = filter.filterType;
+    const filterValue = filter.filter;
+    switch (filterType) {
+      case 'text':
+        switch (filter.type) {
+          case 'contains':
+            return `${source} == @${filterValue}@`;
+          case 'equals':
+            return `${source} == ${filterValue}`;
+          case 'notEqual':
+            return `${source} != '${filterValue}'`;
+          case 'startsWith':
+            return `${source} begin ${filterValue}`;
+          case 'endsWith':
+            return `${source} == @${filterValue}`;
+          default:
+            return '';
+        }
+      case 'number':
+        switch (filter.type) {
+          case 'equals':
+            return `${source} == ${filterValue}`;
+          case 'notEqual':
+            return `${source} != ${filterValue}`;
+          case 'greaterThan':
+            return `${source} > ${filterValue}`;
+          case 'greaterThanOrEqual':
+            return `${source} >= ${filterValue}`;
+          case 'lessThan':
+            return `${source} < ${filterValue}`;
+          case 'lessThanOrEqual':
+            return `${source} <= ${filterValue}`;
+          case 'inRange':
+            return `${source} >= ${filter.filter} AND ${source} <= ${filter.filterTo}`;
+          default:
+            return '';
+        }
+      case 'date':
+        switch (filter.type) {
+          case 'equals':
+            return `${source} == "${new Date(filter.dateFrom)}"`;
+          case 'notEqual':
+            return `${source} != "${new Date(filter.dateFrom)}"`;
+          case 'lessThan':
+            return `${source} < "!!2024-27-2!!"`;
+          case 'greaterThan':
+            return `${source} > "${new Date(filter.dateFrom)}"`;
+          case 'inRange':
+            return `${source} > "${dateTo4DFormat(new Date(filter.dateFrom))}" AND ${source} < "${dateTo4DFormat(new Date(filter.dateTo))}"`;
+          default:
+            return '';
+        }
+      default:
+        return '';
+    }
+  };
+
+  const buildFilterQueries = (filterModel: any, columns: any[]): string[] => {
+    return Object.keys(filterModel).map((key) => {
+      const filter = filterModel[key];
+      const column = columns.find((col) => col.title === key);
+      if (!column) return '';
+      const source = column.source;
+      if (filter.operator && filter.conditions) {
+        const conditionQueries = filter.conditions.map((condition: any) =>
+          buildFilterQuery(condition, source),
+        );
+        return `(${conditionQueries.join(` ${filter.operator} `)})`;
+      } else {
+        return buildFilterQuery(filter, source);
+      }
+    });
+  };
+
+  const applySorting = async (params: IGetRowsParams, columns: any[], ds: any) => {
+    if (params.sortModel.length > 0 && !isEqual(params.sortModel, prevSortModelRef.current)) {
+      prevSortModelRef.current = params.sortModel;
+      const sortingString = params.sortModel
+        .map((sort) => `${columns.find((c) => c.title === sort.colId)?.source} ${sort.sort}`)
+        .join(', ');
+      await ds.orderBy(sortingString);
+    }
+  };
+
   const onGridReady = useCallback(
     (params: GridReadyEvent) => {
       getState(params);
       params.api.setGridOption('datasource', {
         getRows: async (params: IGetRowsParams) => {
+          let entities = null;
+          let length = count;
+          let rowData: any[] = [];
           if (!isEqual(params.filterModel, {})) {
-            //TODO: foreach key in filterModel, apply filter
-          }
-          if (params.sortModel.length > 0 && !isEqual(params.sortModel, prevSortModelRef.current)) {
-            prevSortModelRef.current = params.sortModel;
-            const sortingString = params.sortModel
-              .map((sort) => `${columns.find((c) => c.title === sort.colId)?.source} ${sort.sort}`)
-              .join(', ');
-            await datasource.orderBy(sortingString);
-          }
-          const entities = await fetchIndex(params.startRow);
-          rowDataRef.current = entities.map((data: any) => {
-            const row: any = {};
-            columns.forEach((col) => {
-              row[col.title] = data[col.source];
+            const filterQueries = buildFilterQueries(params.filterModel, columns);
+            const queryStr = filterQueries.filter(Boolean).join(' AND ');
+
+            const { entitysel } = searchDs as any;
+            const dataSetName = entitysel?.getServerRef();
+            (searchDs as any).entitysel = searchDs.dataclass.query(queryStr, {
+              dataSetName,
+              filterAttributes: searchDs.filterAttributesText || searchDs._private.filterAttributes,
             });
-            return row;
-          });
+
+            await applySorting(params, columns, searchDs);
+
+            entities = await fetchIndexClone(params.startRow);
+            rowData = entities.map((data: any) => {
+              const row: any = {};
+              columns.forEach((col) => {
+                row[col.title] = data[col.source];
+              });
+              return row;
+            });
+
+            length = searchDs.entitysel._private.selLength;
+          } else {
+            await applySorting(params, columns, ds);
+
+            entities = await fetchIndex(params.startRow);
+            rowData = entities.map((data: any) => {
+              const row: any = {};
+              columns.forEach((col) => {
+                row[col.title] = data[col.source];
+              });
+              return row;
+            });
+
+            length = count;
+          }
+
           if (Array.isArray(entities)) {
-            params.successCallback(rowDataRef.current, count);
+            params.successCallback(rowData, length);
           } else {
             params.failCallback();
           }
