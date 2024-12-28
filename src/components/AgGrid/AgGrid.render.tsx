@@ -198,7 +198,7 @@ const AgGrid: FC<IAgGridProps> = ({ columns, state, style, className, classNames
     }
   }, []);
 
-  const buildFilterQuery = (filter: any, source: string): string => {
+  const buildFilterQuery = useCallback((filter: any, source: string): string => {
     const filterType = filter.filterType;
     const filterValue = filter.filter;
     switch (filterType) {
@@ -254,26 +254,29 @@ const AgGrid: FC<IAgGridProps> = ({ columns, state, style, className, classNames
       default:
         return '';
     }
-  };
+  }, []);
 
-  const buildFilterQueries = (filterModel: any, columns: any[]): string[] => {
-    return Object.keys(filterModel).map((key) => {
-      const filter = filterModel[key];
-      const column = columns.find((col) => col.title === key);
-      if (!column) return '';
-      const source = column.source;
-      if (filter.operator && filter.conditions) {
-        const conditionQueries = filter.conditions.map((condition: any) =>
-          buildFilterQuery(condition, source),
-        );
-        return `(${conditionQueries.join(` ${filter.operator} `)})`;
-      } else {
-        return buildFilterQuery(filter, source);
-      }
-    });
-  };
+  const buildFilterQueries = useCallback(
+    (filterModel: any, columns: any[]): string[] => {
+      return Object.keys(filterModel).map((key) => {
+        const filter = filterModel[key];
+        const column = columns.find((col) => col.title === key);
+        if (!column) return '';
+        const source = column.source;
+        if (filter.operator && filter.conditions) {
+          const conditionQueries = filter.conditions.map((condition: any) =>
+            buildFilterQuery(condition, source),
+          );
+          return `(${conditionQueries.join(` ${filter.operator} `)})`;
+        } else {
+          return buildFilterQuery(filter, source);
+        }
+      });
+    },
+    [buildFilterQuery],
+  );
 
-  const applySorting = async (params: IGetRowsParams, columns: any[], ds: any) => {
+  const applySorting = useCallback(async (params: IGetRowsParams, columns: any[], ds: any) => {
     if (params.sortModel.length > 0 && !isEqual(params.sortModel, prevSortModelRef.current)) {
       prevSortModelRef.current = params.sortModel;
       const sortingString = params.sortModel
@@ -281,7 +284,19 @@ const AgGrid: FC<IAgGridProps> = ({ columns, state, style, className, classNames
         .join(', ');
       await ds.orderBy(sortingString);
     }
-  };
+  }, []);
+
+  const fetchData = useCallback(async (fetchIndex: any, params: IGetRowsParams) => {
+    const entities = await fetchIndex(params.startRow);
+    const rowData = entities.map((data: any) => {
+      const row: any = {};
+      columns.forEach((col) => {
+        row[col.title] = data[col.source];
+      });
+      return row;
+    });
+    return { entities, rowData };
+  }, []);
 
   const onGridReady = useCallback(
     (params: GridReadyEvent) => {
@@ -304,28 +319,16 @@ const AgGrid: FC<IAgGridProps> = ({ columns, state, style, className, classNames
 
             await applySorting(params, columns, searchDs);
 
-            entities = await fetchIndexClone(params.startRow);
-            rowData = entities.map((data: any) => {
-              const row: any = {};
-              columns.forEach((col) => {
-                row[col.title] = data[col.source];
-              });
-              return row;
-            });
-
+            const result = await fetchData(fetchIndexClone, params);
+            entities = result.entities;
+            rowData = result.rowData;
             length = searchDs.entitysel._private.selLength;
           } else {
             await applySorting(params, columns, ds);
 
-            entities = await fetchIndex(params.startRow);
-            rowData = entities.map((data: any) => {
-              const row: any = {};
-              columns.forEach((col) => {
-                row[col.title] = data[col.source];
-              });
-              return row;
-            });
-
+            const result = await fetchData(fetchIndex, params);
+            entities = result.entities;
+            rowData = result.rowData;
             length = count;
           }
 
