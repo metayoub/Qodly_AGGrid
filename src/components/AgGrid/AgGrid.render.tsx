@@ -344,51 +344,48 @@ const AgGrid: FC<IAgGridProps> = ({
     return { entities, rowData };
   }, []);
 
-  const onGridReady = useCallback(
-    (params: GridReadyEvent) => {
-      getState(params);
+  const onGridReady = useCallback((params: GridReadyEvent) => {
+    getState(params);
 
-      params.api.setGridOption('datasource', {
-        getRows: async (params: IGetRowsParams) => {
-          let entities = null;
-          let length = count;
-          let rowData: any[] = [];
-          if (!isEqual(params.filterModel, {})) {
-            const filterQueries = buildFilterQueries(params.filterModel, columns);
-            const queryStr = filterQueries.filter(Boolean).join(' AND ');
+    params.api.setGridOption('datasource', {
+      getRows: async (params: IGetRowsParams) => {
+        let entities = null;
+        let length = 0;
+        let rowData: any[] = [];
+        if (!isEqual(params.filterModel, {})) {
+          const filterQueries = buildFilterQueries(params.filterModel, columns);
+          const queryStr = filterQueries.filter(Boolean).join(' AND ');
 
-            const { entitysel } = searchDs as any;
-            const dataSetName = entitysel?.getServerRef();
-            (searchDs as any).entitysel = searchDs.dataclass.query(queryStr, {
-              dataSetName,
-              filterAttributes: searchDs.filterAttributesText || searchDs._private.filterAttributes,
-            });
+          const { entitysel } = searchDs as any;
+          const dataSetName = entitysel?.getServerRef();
+          (searchDs as any).entitysel = searchDs.dataclass.query(queryStr, {
+            dataSetName,
+            filterAttributes: searchDs.filterAttributesText || searchDs._private.filterAttributes,
+          });
 
-            await applySorting(params, columns, searchDs);
+          await applySorting(params, columns, searchDs);
 
-            const result = await fetchData(fetchIndexClone, params);
-            entities = result.entities;
-            rowData = result.rowData;
-            length = searchDs.entitysel._private.selLength;
-          } else {
-            await applySorting(params, columns, ds);
+          const result = await fetchData(fetchIndexClone, params);
+          entities = result.entities;
+          rowData = result.rowData;
+          length = searchDs.entitysel._private.selLength;
+        } else {
+          await applySorting(params, columns, ds);
 
-            const result = await fetchData(fetchIndex, params);
-            entities = result.entities;
-            rowData = result.rowData;
-            length = count;
-          }
+          const result = await fetchData(fetchIndex, params);
+          entities = result.entities;
+          rowData = result.rowData;
+          length = (ds as any).entitysel._private.selLength;
+        }
 
-          if (Array.isArray(entities)) {
-            params.successCallback(rowData, length);
-          } else {
-            params.failCallback();
-          }
-        },
-      });
-    },
-    [count],
-  );
+        if (Array.isArray(entities)) {
+          params.successCallback(rowData, length);
+        } else {
+          params.failCallback();
+        }
+      },
+    });
+  }, []);
 
   return (
     <div ref={connect} style={style} className={cn(className, classNames)}>
