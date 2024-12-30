@@ -1,11 +1,13 @@
-import { useEnhancedNode } from '@ws-ui/webform-editor';
+import { useDatasourceSub, useEnhancedNode } from '@ws-ui/webform-editor';
 import cn from 'classnames';
 import { FC, useMemo } from 'react';
 import { AgGridReact } from 'ag-grid-react';
 import { IAgGridProps } from './AgGrid.config';
 import { ColDef, themeQuartz } from 'ag-grid-community';
+import { BsFillInfoCircleFill } from 'react-icons/bs';
 
 const AgGrid: FC<IAgGridProps> = ({
+  datasource,
   columns,
   spacing,
   accentColor,
@@ -72,14 +74,30 @@ const AgGrid: FC<IAgGridProps> = ({
     rangeSelectionBorderColor: 'transparent',
   });
 
+  useDatasourceSub();
+
   return (
     <div ref={connect} style={style} className={cn(className, classNames)}>
-      <AgGridReact
-        rowData={rowData}
-        columnDefs={colDefs}
-        defaultColDef={defaultColDef}
-        theme={theme}
-      />
+      {datasource ? (
+        columns.length > 0 ? (
+          <AgGridReact
+            rowData={rowData}
+            columnDefs={colDefs}
+            defaultColDef={defaultColDef}
+            theme={theme}
+          />
+        ) : (
+          <div className="flex h-full flex-col items-center justify-center rounded-lg border bg-purple-400 py-4 text-white">
+            <BsFillInfoCircleFill className="mb-1 h-8 w-8" />
+            <p>Please add columns</p>
+          </div>
+        )
+      ) : (
+        <div className="flex h-full flex-col items-center justify-center rounded-lg border bg-purple-400 py-4 text-white">
+          <BsFillInfoCircleFill className="mb-1 h-8 w-8" />
+          <p>Please attach a datasource</p>
+        </div>
+      )}
     </div>
   );
 };

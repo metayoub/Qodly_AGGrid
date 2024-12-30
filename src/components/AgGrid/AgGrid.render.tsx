@@ -26,6 +26,7 @@ import cloneDeep from 'lodash/cloneDeep';
 import CustomCell from './CustomCell';
 
 const AgGrid: FC<IAgGridProps> = ({
+  datasource,
   columns,
   state = '',
   spacing,
@@ -82,7 +83,7 @@ const AgGrid: FC<IAgGridProps> = ({
 
   const [selected, setSelected] = useState(-1);
   const [_scrollIndex, setScrollIndex] = useState(0);
-  const [count, setCount] = useState(0);
+  const [count, setCount] = useState(1);
   const colDefs: ColDef[] = useMemo(
     () =>
       columns.map((col) => ({
@@ -91,7 +92,7 @@ const AgGrid: FC<IAgGridProps> = ({
           format: col.format,
           dataType: col.dataType,
         },
-        sortable: col.sorting,
+        sortable: col.dataType !== 'image' && col.dataType !== 'object' && col.sorting,
         resizable: col.sizing,
         width: col.width,
         flex: col.flex,
@@ -126,6 +127,8 @@ const AgGrid: FC<IAgGridProps> = ({
       })),
     [],
   );
+
+  console.log('colDefs', colDefs);
 
   const defaultColDef = useMemo<ColDef>(() => {
     return {
@@ -215,7 +218,6 @@ const AgGrid: FC<IAgGridProps> = ({
 
   const selectCell = useCallback((event: any) => {
     if (!ds) return;
-    event.api.getSelectedRows();
     emit('oncellclick', {
       column: event.column.getColId(),
       value: event.value,
@@ -390,24 +392,30 @@ const AgGrid: FC<IAgGridProps> = ({
 
   return (
     <div ref={connect} style={style} className={cn(className, classNames)}>
-      <AgGridReact
-        columnDefs={colDefs}
-        defaultColDef={defaultColDef}
-        onRowClicked={selectRow}
-        onGridReady={onGridReady}
-        rowModelType="infinite"
-        rowSelection="single"
-        cacheBlockSize={100}
-        maxBlocksInCache={10}
-        cacheOverflowSize={2}
-        maxConcurrentDatasourceRequests={1}
-        infiniteInitialRowCount={count}
-        rowBuffer={0}
-        onStateUpdated={stateUpdated}
-        onCellClicked={selectCell}
-        onColumnHeaderClicked={selectHeader}
-        theme={theme}
-      />
+      {datasource ? (
+        <AgGridReact
+          columnDefs={colDefs}
+          defaultColDef={defaultColDef}
+          onRowClicked={selectRow}
+          onGridReady={onGridReady}
+          rowModelType="infinite"
+          rowSelection={{ mode: 'singleRow', enableClickSelection: true, checkboxes: false }}
+          cacheBlockSize={100}
+          maxBlocksInCache={10}
+          cacheOverflowSize={2}
+          maxConcurrentDatasourceRequests={1}
+          infiniteInitialRowCount={count}
+          rowBuffer={0}
+          onStateUpdated={stateUpdated}
+          onCellClicked={selectCell}
+          onColumnHeaderClicked={selectHeader}
+          theme={theme}
+        />
+      ) : (
+        <div className="flex h-full flex-col items-center justify-center rounded-lg border bg-purple-400 py-4 text-white">
+          <p>Error</p>
+        </div>
+      )}
     </div>
   );
 };
