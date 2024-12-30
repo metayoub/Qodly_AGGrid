@@ -207,6 +207,9 @@ export default {
     headerVerticalPaddingScale: 1,
     headerFontSize: '14px',
     headerFontWeight: 700,
+    cellHorizontalPaddingScale: 1.3,
+    rowVerticalPaddingScale: 1.2,
+    iconSize: '16px',
   },
 } as T4DComponentConfig<IAgGridProps>;
 
@@ -229,6 +232,9 @@ export interface IAgGridProps extends webforms.ComponentProps {
   headerVerticalPaddingScale: number;
   headerFontSize: string;
   headerFontWeight: number;
+  cellHorizontalPaddingScale: number;
+  rowVerticalPaddingScale: number;
+  iconSize: string;
 }
 
 export interface IColumn {

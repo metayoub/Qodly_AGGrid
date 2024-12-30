@@ -17,7 +17,6 @@ import {
   ColDef,
   GridReadyEvent,
   IGetRowsParams,
-  RowClassParams,
   SortModelItem,
   StateUpdatedEvent,
   themeQuartz,
@@ -28,7 +27,7 @@ import CustomCell from './CustomCell';
 
 const AgGrid: FC<IAgGridProps> = ({
   columns,
-  state,
+  state = '',
   spacing,
   accentColor,
   backgroundColor,
@@ -45,6 +44,9 @@ const AgGrid: FC<IAgGridProps> = ({
   headerVerticalPaddingScale,
   headerFontSize,
   headerFontWeight,
+  cellHorizontalPaddingScale,
+  rowVerticalPaddingScale,
+  iconSize,
   style,
   className,
   classNames = [],
@@ -76,7 +78,7 @@ const AgGrid: FC<IAgGridProps> = ({
   });
 
   const path = useWebformPath();
-  const stateDS = (window as any).DataSource.getSource(state, path);
+  const stateDS = window.DataSource.getSource(state, path);
 
   const [selected, setSelected] = useState(-1);
   const [_scrollIndex, setScrollIndex] = useState(0);
@@ -150,6 +152,12 @@ const AgGrid: FC<IAgGridProps> = ({
     headerVerticalPaddingScale,
     headerFontSize,
     headerFontWeight,
+    cellHorizontalPaddingScale,
+    rowVerticalPaddingScale,
+    iconSize,
+    foregroundColor: textColor,
+    borderRadius: wrapperBorderRadius,
+    rangeSelectionBorderColor: 'transparent',
   });
 
   const { updateCurrentDsValue } = useDsChangeHandler({
@@ -197,7 +205,8 @@ const AgGrid: FC<IAgGridProps> = ({
   }, [ds]);
 
   const selectRow = useCallback(async (event: any) => {
-    if (!ds || !currentElement) return;
+    if (!ds) return;
+    event.api.getSelectedRows();
     await updateCurrentDsValue({
       index: event.rowIndex,
     });
@@ -205,6 +214,8 @@ const AgGrid: FC<IAgGridProps> = ({
   }, []);
 
   const selectCell = useCallback((event: any) => {
+    if (!ds) return;
+    event.api.getSelectedRows();
     emit('oncellclick', {
       column: event.column.getColId(),
       value: event.value,
@@ -217,16 +228,6 @@ const AgGrid: FC<IAgGridProps> = ({
     });
   }, []);
 
-  const getRowStyle = useCallback(
-    (params: RowClassParams) => {
-      if (params.node.rowIndex === selected) {
-        return { backgroundColor: accentColor };
-      }
-      return undefined;
-    },
-    [selected],
-  );
-
   const stateUpdated = useCallback((params: StateUpdatedEvent) => {
     if (stateDS && params.type === 'stateUpdated') {
       stateDS.setValue(null, params.api.getColumnState());
@@ -236,7 +237,7 @@ const AgGrid: FC<IAgGridProps> = ({
 
   const getState = useCallback(async (params: GridReadyEvent) => {
     if (stateDS) {
-      const dsValue = await stateDS?.value;
+      const dsValue = await stateDS?.getValue();
       params.api.applyColumnState({ state: dsValue });
     }
   }, []);
@@ -393,9 +394,9 @@ const AgGrid: FC<IAgGridProps> = ({
         columnDefs={colDefs}
         defaultColDef={defaultColDef}
         onRowClicked={selectRow}
-        getRowStyle={getRowStyle}
         onGridReady={onGridReady}
         rowModelType="infinite"
+        rowSelection="single"
         cacheBlockSize={100}
         maxBlocksInCache={10}
         cacheOverflowSize={2}

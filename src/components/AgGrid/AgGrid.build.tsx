@@ -23,6 +23,9 @@ const AgGrid: FC<IAgGridProps> = ({
   headerVerticalPaddingScale,
   headerFontSize,
   headerFontWeight,
+  cellHorizontalPaddingScale,
+  rowVerticalPaddingScale,
+  iconSize,
   style,
   className,
   classNames = [],
@@ -63,9 +66,11 @@ const AgGrid: FC<IAgGridProps> = ({
     headerVerticalPaddingScale,
     headerFontSize,
     headerFontWeight,
+    cellHorizontalPaddingScale,
+    rowVerticalPaddingScale,
+    iconSize,
+    rangeSelectionBorderColor: 'transparent',
   });
-
-  console.log('style', style);
 
   return (
     <div ref={connect} style={style} className={cn(className, classNames)}>

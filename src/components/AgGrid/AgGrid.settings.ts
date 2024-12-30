@@ -85,11 +85,6 @@ const dataAccessSettings: TSetting[] = [
     type: ESetting.DS_AUTO_SUGGEST,
   },
   {
-    key: 'theme',
-    label: 'Theme Side',
-    type: ESetting.DS_AUTO_SUGGEST,
-  },
-  {
     key: 'serverSideRef',
     label: 'Server Side',
     type: ESetting.TEXT_FIELD,
@@ -383,6 +378,31 @@ const cellSettings: TSetting[] = [
     type: ESetting.COLOR_PICKER,
     defaultValue: '#21222C',
   },
+  {
+    key: 'cellHorizontalPaddingScale',
+    label: 'Cell Horizontal Padding Scale',
+    type: ESetting.NUMBER_FIELD,
+    defaultValue: 1,
+  },
+  {
+    key: 'rowVerticalPaddingScale',
+    label: 'Row Vertical Padding Scale',
+    type: ESetting.NUMBER_FIELD,
+    defaultValue: 1,
+  },
+];
+
+const iconSettings: TSetting[] = [
+  {
+    key: 'iconSize',
+    label: 'Icon Size',
+    type: ESetting.UNITFIELD,
+    tags: ['icon-size'],
+    units: ['px', 'em', 'rem', 'vw', 'vh', 'pt', '%'],
+    defaultValue: '16px',
+    hasLabel: true,
+    isSmallInput: true,
+  },
 ];
 
 const Settings: TSetting[] = [
@@ -421,6 +441,12 @@ const Settings: TSetting[] = [
     label: 'Cell',
     type: ESetting.GROUP,
     components: cellSettings,
+  },
+  {
+    key: 'icon',
+    label: 'Icon',
+    type: ESetting.GROUP,
+    components: iconSettings,
   },
 ];
 
