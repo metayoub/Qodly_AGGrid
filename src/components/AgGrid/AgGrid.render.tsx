@@ -20,12 +20,35 @@ import {
   RowClassParams,
   SortModelItem,
   StateUpdatedEvent,
+  themeQuartz,
 } from 'ag-grid-community';
 import isEqual from 'lodash/isEqual';
 import cloneDeep from 'lodash/cloneDeep';
 import CustomCell from './CustomCell';
 
-const AgGrid: FC<IAgGridProps> = ({ columns, state, style, className, classNames = [] }) => {
+const AgGrid: FC<IAgGridProps> = ({
+  columns,
+  state,
+  spacing,
+  accentColor,
+  backgroundColor,
+  textColor,
+  fontSize,
+  borderColor,
+  wrapperBorderRadius,
+  oddRowBackgroundColor,
+  rowBorder,
+  columnBorder,
+  headerBackgroundColor,
+  headerTextColor,
+  headerColumnBorder,
+  headerVerticalPaddingScale,
+  headerFontSize,
+  headerFontWeight,
+  style,
+  className,
+  classNames = [],
+}) => {
   const { connect, emit } = useRenderer({
     omittedEvents: ['onselect', 'onclick', 'onheaderclick', 'oncellclick', 'onsavestate'],
   });
@@ -54,6 +77,7 @@ const AgGrid: FC<IAgGridProps> = ({ columns, state, style, className, classNames
 
   const path = useWebformPath();
   const stateDS = (window as any).DataSource.getSource(state, path);
+
   const [selected, setSelected] = useState(-1);
   const [_scrollIndex, setScrollIndex] = useState(0);
   const [count, setCount] = useState(0);
@@ -108,6 +132,25 @@ const AgGrid: FC<IAgGridProps> = ({ columns, state, style, className, classNames
       cellRenderer: CustomCell,
     };
   }, []);
+
+  const theme = themeQuartz.withParams({
+    spacing,
+    accentColor,
+    backgroundColor,
+    textColor,
+    fontSize,
+    oddRowBackgroundColor,
+    borderColor,
+    rowBorder,
+    columnBorder,
+    wrapperBorderRadius,
+    headerBackgroundColor,
+    headerTextColor,
+    headerColumnBorder,
+    headerVerticalPaddingScale,
+    headerFontSize,
+    headerFontWeight,
+  });
 
   const { updateCurrentDsValue } = useDsChangeHandler({
     source: ds,
@@ -177,7 +220,7 @@ const AgGrid: FC<IAgGridProps> = ({ columns, state, style, className, classNames
   const getRowStyle = useCallback(
     (params: RowClassParams) => {
       if (params.node.rowIndex === selected) {
-        return { backgroundColor: 'lightblue' }; // TODO: make this configurable
+        return { backgroundColor: accentColor };
       }
       return undefined;
     },
@@ -301,6 +344,7 @@ const AgGrid: FC<IAgGridProps> = ({ columns, state, style, className, classNames
   const onGridReady = useCallback(
     (params: GridReadyEvent) => {
       getState(params);
+
       params.api.setGridOption('datasource', {
         getRows: async (params: IGetRowsParams) => {
           let entities = null;
@@ -361,6 +405,7 @@ const AgGrid: FC<IAgGridProps> = ({ columns, state, style, className, classNames
         onStateUpdated={stateUpdated}
         onCellClicked={selectCell}
         onColumnHeaderClicked={selectHeader}
+        theme={theme}
       />
     </div>
   );

@@ -191,12 +191,44 @@ export default {
     style: {
       height: '300px',
     },
+    spacing: '8px',
+    accentColor: '#2196F3',
+    backgroundColor: '#fff',
+    textColor: '#000',
+    fontSize: '14px',
+    oddRowBackgroundColor: '',
+    borderColor: '#e0e0e0',
+    wrapperBorderRadius: '4px',
+    headerBackgroundColor: '',
+    headerTextColor: '',
+    rowBorder: true,
+    columnBorder: false,
+    headerColumnBorder: false,
+    headerVerticalPaddingScale: 1,
+    headerFontSize: '14px',
+    headerFontWeight: 700,
   },
 } as T4DComponentConfig<IAgGridProps>;
 
 export interface IAgGridProps extends webforms.ComponentProps {
   columns: IColumn[];
   state?: string;
+  spacing: string;
+  accentColor: string;
+  backgroundColor: string;
+  textColor: string;
+  fontSize: string;
+  oddRowBackgroundColor: string;
+  borderColor: string;
+  wrapperBorderRadius: string;
+  rowBorder: boolean;
+  columnBorder: boolean;
+  headerBackgroundColor: string;
+  headerTextColor: string;
+  headerColumnBorder: boolean;
+  headerVerticalPaddingScale: number;
+  headerFontSize: string;
+  headerFontWeight: number;
 }
 
 export interface IColumn {
