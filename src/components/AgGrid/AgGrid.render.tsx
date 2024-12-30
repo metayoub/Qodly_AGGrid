@@ -128,8 +128,6 @@ const AgGrid: FC<IAgGridProps> = ({
     [],
   );
 
-  console.log('colDefs', colDefs);
-
   const defaultColDef = useMemo<ColDef>(() => {
     return {
       minWidth: 100,
@@ -251,15 +249,15 @@ const AgGrid: FC<IAgGridProps> = ({
       case 'text':
         switch (filter.type) {
           case 'contains':
-            return `${source} == @${filterValue}@`;
+            return `${source} == "@${filterValue}@"`;
           case 'equals':
-            return `${source} == ${filterValue}`;
+            return `${source} == "${filterValue}"`;
           case 'notEqual':
-            return `${source} != '${filterValue}'`;
+            return `${source} != "${filterValue}"`;
           case 'startsWith':
-            return `${source} begin ${filterValue}`;
+            return `${source} begin "${filterValue}"`;
           case 'endsWith':
-            return `${source} == @${filterValue}`;
+            return `${source} == "@${filterValue}"`;
           default:
             return '';
         }
