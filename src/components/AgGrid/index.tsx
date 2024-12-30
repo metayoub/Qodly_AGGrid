@@ -9,6 +9,8 @@ import {
   ValidationModule,
   RowSelectionModule,
   TextFilterModule,
+  NumberFilterModule,
+  DateFilterModule,
   ModuleRegistry,
 } from 'ag-grid-community';
 
@@ -19,6 +21,8 @@ ModuleRegistry.registerModules([
   RowSelectionModule,
   TextFilterModule,
   ValidationModule, // to delete
+  NumberFilterModule,
+  DateFilterModule,
   ColumnApiModule,
 ]);
 // To minimize bundle size, only register the modules you want to use. See the Modules page for more information.

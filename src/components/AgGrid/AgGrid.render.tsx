@@ -7,7 +7,6 @@ import {
   EntityActions,
   useEnhancedNode,
   useWebformPath,
-  dateTo4DFormat,
 } from '@ws-ui/webform-editor';
 import cn from 'classnames';
 import { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -24,6 +23,7 @@ import {
 import isEqual from 'lodash/isEqual';
 import cloneDeep from 'lodash/cloneDeep';
 import CustomCell from './CustomCell';
+import { format } from 'date-fns';
 
 const AgGrid: FC<IAgGridProps> = ({
   datasource,
@@ -84,6 +84,7 @@ const AgGrid: FC<IAgGridProps> = ({
   const [selected, setSelected] = useState(-1);
   const [_scrollIndex, setScrollIndex] = useState(0);
   const [count, setCount] = useState(1);
+  // TODO: Locked choosen column
   const colDefs: ColDef[] = useMemo(
     () =>
       columns.map((col) => ({
@@ -281,17 +282,18 @@ const AgGrid: FC<IAgGridProps> = ({
             return '';
         }
       case 'date':
+        const dateFrom = new Date(filter.dateFrom);
         switch (filter.type) {
           case 'equals':
-            return `${source} == "${new Date(filter.dateFrom)}"`;
+            return `${source} == ${format(dateFrom, 'yyyy-MM-dd')}`;
           case 'notEqual':
-            return `${source} != "${new Date(filter.dateFrom)}"`;
+            return `${source} != ${format(dateFrom, 'yyyy-MM-dd')}`;
           case 'lessThan':
-            return `${source} < "!!2024-27-2!!"`;
+            return `${source} < ${format(dateFrom, 'yyyy-MM-dd')}`;
           case 'greaterThan':
-            return `${source} > "${new Date(filter.dateFrom)}"`;
+            return `${source} > ${format(dateFrom, 'yyyy-MM-dd')}`;
           case 'inRange':
-            return `${source} > "${dateTo4DFormat(new Date(filter.dateFrom))}" AND ${source} < "${dateTo4DFormat(new Date(filter.dateTo))}"`;
+            return `${source} > ${format(dateFrom, 'yyyy-MM-dd')} AND ${source} < ${format(new Date(filter.dateTo), 'yyyy-MM-dd')}`;
           default:
             return '';
         }
