@@ -53,10 +53,10 @@ const commonSettings: TSetting[] = [
         key: 'filtering',
       },
       {
-        label: 'Enable Hiding',
-        defaultValue: true,
+        label: 'Locked Position',
+        defaultValue: false,
         type: ESetting.CHECKBOX,
-        key: 'hidden',
+        key: 'locked',
       },
       {
         label: 'Enable Sizing',

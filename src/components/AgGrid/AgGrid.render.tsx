@@ -93,6 +93,7 @@ const AgGrid: FC<IAgGridProps> = ({
           format: col.format,
           dataType: col.dataType,
         },
+        lockPosition: col.locked,
         sortable: col.dataType !== 'image' && col.dataType !== 'object' && col.sorting,
         resizable: col.sizing,
         width: col.width,

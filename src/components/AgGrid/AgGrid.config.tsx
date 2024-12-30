@@ -156,7 +156,7 @@ export default {
                     flex: 1,
                     sorting: false,
                     filtering: false,
-                    hidden: true,
+                    locked: false,
                     sizing: true,
                     id: generate(),
                     ...(item.attribute.type === 'image'
@@ -242,7 +242,7 @@ export interface IColumn {
   source: string;
   sorting: boolean;
   filtering: boolean;
-  hidden: boolean;
+  locked: boolean;
   sizing: boolean;
   width: number;
   format: string;
