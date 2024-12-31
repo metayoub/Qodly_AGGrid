@@ -185,7 +185,7 @@ const AgGrid: FC<IAgGridProps> = ({
     onCurrentDsChange: (selected) => {
       if (!gridRef.current) return;
       const rowNode = gridRef.current.api?.getRowNode(selected.toString());
-      gridRef.current.api?.ensureIndexVisible(selected, 'middle');
+      gridRef.current.api?.ensureIndexVisible(selected);
       rowNode?.setSelected(true);
 
       entitySubject.next({
@@ -200,7 +200,6 @@ const AgGrid: FC<IAgGridProps> = ({
 
   const selectRow = useCallback(async (event: any) => {
     if (!ds) return;
-    event.api.getSelectedRows();
     await updateCurrentDsValue({
       index: event.rowIndex,
     });
