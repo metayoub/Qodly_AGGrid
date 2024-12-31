@@ -83,8 +83,7 @@ const AgGrid: FC<IAgGridProps> = ({
 
   const [selected, setSelected] = useState(-1);
   const [_scrollIndex, setScrollIndex] = useState(0);
-  const [count, setCount] = useState(1);
-  // TODO: Locked choosen column
+  const [_count, setCount] = useState(0);
   const colDefs: ColDef[] = useMemo(
     () =>
       columns.map((col) => ({
@@ -402,7 +401,6 @@ const AgGrid: FC<IAgGridProps> = ({
           maxBlocksInCache={10}
           cacheOverflowSize={2}
           maxConcurrentDatasourceRequests={1}
-          infiniteInitialRowCount={count}
           rowBuffer={0}
           onStateUpdated={stateUpdated}
           onCellClicked={selectCell}

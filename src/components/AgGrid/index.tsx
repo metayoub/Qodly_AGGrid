@@ -6,7 +6,7 @@ import {
   InfiniteRowModelModule,
   ClientSideRowModelModule,
   ColumnApiModule,
-  ValidationModule,
+  //ValidationModule,
   RowSelectionModule,
   TextFilterModule,
   NumberFilterModule,
@@ -14,13 +14,12 @@ import {
   ModuleRegistry,
 } from 'ag-grid-community';
 
-//
 ModuleRegistry.registerModules([
   InfiniteRowModelModule,
   ClientSideRowModelModule,
   RowSelectionModule,
   TextFilterModule,
-  ValidationModule, // to delete
+  //ValidationModule, // only for dev mode
   NumberFilterModule,
   DateFilterModule,
   ColumnApiModule,
