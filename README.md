@@ -24,6 +24,15 @@ You can save the state of column visibility, Size and order using `Qodly Source`
 - **Column Size**: Change the Size of the column and make it suitable for your screen, the new sizes will be saved.
 - **Column Order**: Reorder columns by dragging and dropping them, and the new order will be saved.
 
+## Data Access
+
+| Name             | Type             | Required | Description                                                                                           |
+| ---------------- | ---------------- | -------- | ----------------------------------------------------------------------------------------------------- |
+| Qodly Source     | Entity Selection | Yes      | Specifies the selection of entities to be displayed as data in the component                          |
+| Selected Element | Entity           | No       | Each item of the virtualizer is featured by this property once it's selected                          |
+| State            | Array            | No       | Used to save the current states of the grid, such as selected rows, filters, or other contextual data |
+| Server Side      | string           | No       | Includes a reference that users can use for executing server-side actions related to it               |
+
 ## Properties
 
 The Qodly AG Grid component provides various properties to customize its appearance and behavior. Here are some of the key settings:
