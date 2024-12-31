@@ -6,8 +6,10 @@ import {
   InfiniteRowModelModule,
   ClientSideRowModelModule,
   ColumnApiModule,
-  //ValidationModule,
+  RowApiModule,
+  ValidationModule,
   RowSelectionModule,
+  ScrollApiModule,
   TextFilterModule,
   NumberFilterModule,
   DateFilterModule,
@@ -19,7 +21,9 @@ ModuleRegistry.registerModules([
   ClientSideRowModelModule,
   RowSelectionModule,
   TextFilterModule,
-  //ValidationModule, // only for dev mode
+  RowApiModule,
+  ScrollApiModule,
+  ValidationModule, // only for dev mode
   NumberFilterModule,
   DateFilterModule,
   ColumnApiModule,

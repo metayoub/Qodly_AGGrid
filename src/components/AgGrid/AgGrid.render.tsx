@@ -9,7 +9,7 @@ import {
   useWebformPath,
 } from '@ws-ui/webform-editor';
 import cn from 'classnames';
-import { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { FC, useCallback, useMemo, useRef, useState } from 'react';
 import { AgGridReact } from 'ag-grid-react';
 import { IAgGridProps } from './AgGrid.config';
 import {
@@ -60,6 +60,7 @@ const AgGrid: FC<IAgGridProps> = ({
   } = useSources({ acceptIteratorSel: true });
   const { id: nodeID } = useEnhancedNode();
   const prevSortModelRef = useRef<SortModelItem[]>([]);
+  const gridRef = useRef<AgGridReact>(null);
   const searchDs = useMemo(() => {
     if (ds) {
       const clone: any = cloneDeep(ds);
@@ -171,6 +172,8 @@ const AgGrid: FC<IAgGridProps> = ({
     setCount,
     fetchIndex,
     onDsChange: (length, selected) => {
+      if (!gridRef.current) return;
+      gridRef.current.api?.refreshInfiniteCache();
       if (selected >= 0) {
         updateCurrentDsValue({
           index: selected < length ? selected : 0,
@@ -179,6 +182,11 @@ const AgGrid: FC<IAgGridProps> = ({
       }
     },
     onCurrentDsChange: (selected) => {
+      if (!gridRef.current) return;
+      const rowNode = gridRef.current.api?.getRowNode(selected.toString());
+      gridRef.current.api?.ensureIndexVisible(selected, 'middle');
+      rowNode?.setSelected(true);
+
       entitySubject.next({
         action: EntityActions.UPDATE,
         payload: {
@@ -188,23 +196,6 @@ const AgGrid: FC<IAgGridProps> = ({
       });
     },
   });
-
-  useEffect(() => {
-    if (!ds) return;
-
-    const listener = async (/* event */) => {
-      await fetchIndex(0);
-    };
-
-    listener();
-
-    ds.addListener('changed', listener);
-
-    return () => {
-      ds.removeListener('changed', listener);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ds]);
 
   const selectRow = useCallback(async (event: any) => {
     if (!ds) return;
@@ -391,6 +382,7 @@ const AgGrid: FC<IAgGridProps> = ({
     <div ref={connect} style={style} className={cn(className, classNames)}>
       {datasource ? (
         <AgGridReact
+          ref={gridRef}
           columnDefs={colDefs}
           defaultColDef={defaultColDef}
           onRowClicked={selectRow}
