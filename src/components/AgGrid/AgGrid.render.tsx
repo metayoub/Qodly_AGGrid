@@ -14,6 +14,7 @@ import { AgGridReact } from 'ag-grid-react';
 import { IAgGridProps } from './AgGrid.config';
 import {
   ColDef,
+  GridApi,
   GridReadyEvent,
   IGetRowsParams,
   SortModelItem,
@@ -335,16 +336,56 @@ const AgGrid: FC<IAgGridProps> = ({
     return { entities, rowData };
   }, []);
 
+  const getSelectedRow = useCallback(async (api: GridApi) => {
+    // select current element
+    if (currentElement && selected === -1) {
+      try {
+        let index = -1;
+        if (currentElement.type === 'entity') {
+          const entity = (currentElement as any).getEntity();
+          if (entity) {
+            const pos = entity.getPos();
+            const ownerSel = entity.getSelection();
+            const sel = (ds as any)?.getSelection();
+            if (sel && sel !== ownerSel) {
+              // fixes qs#461
+              sel.findEntityPosition(entity).then((posInSel: number) => {
+                if (posInSel === pos) {
+                  const rowNode = api.getRowNode(pos.toString());
+                  api.ensureIndexVisible(pos, 'middle');
+                  rowNode?.setSelected(true);
+                }
+              });
+            } else {
+              index = pos;
+            }
+          }
+        } else if (
+          currentElement.type === 'scalar' &&
+          currentElement.dataType === 'object' &&
+          currentElement.parentSource
+        ) {
+          index = (currentElement as any).getPos();
+        }
+        const rowNode = api.getRowNode(index.toString());
+        api.ensureIndexVisible(index, 'middle');
+        rowNode?.setSelected(true);
+      } catch (e) {
+        // proceed
+      }
+    }
+  }, []);
+
   const onGridReady = useCallback((params: GridReadyEvent) => {
     getState(params);
 
     params.api.setGridOption('datasource', {
-      getRows: async (params: IGetRowsParams) => {
+      getRows: async (rowParams: IGetRowsParams) => {
         let entities = null;
         let length = 0;
         let rowData: any[] = [];
-        if (!isEqual(params.filterModel, {})) {
-          const filterQueries = buildFilterQueries(params.filterModel, columns);
+        if (!isEqual(rowParams.filterModel, {})) {
+          const filterQueries = buildFilterQueries(rowParams.filterModel, columns);
           const queryStr = filterQueries.filter(Boolean).join(' AND ');
 
           const { entitysel } = searchDs as any;
@@ -354,26 +395,27 @@ const AgGrid: FC<IAgGridProps> = ({
             filterAttributes: searchDs.filterAttributesText || searchDs._private.filterAttributes,
           });
 
-          await applySorting(params, columns, searchDs);
+          await applySorting(rowParams, columns, searchDs);
 
-          const result = await fetchData(fetchIndexClone, params);
+          const result = await fetchData(fetchIndexClone, rowParams);
           entities = result.entities;
           rowData = result.rowData;
           length = searchDs.entitysel._private.selLength;
         } else {
-          await applySorting(params, columns, ds);
+          await applySorting(rowParams, columns, ds);
 
-          const result = await fetchData(fetchIndex, params);
+          const result = await fetchData(fetchIndex, rowParams);
           entities = result.entities;
           rowData = result.rowData;
           length = (ds as any).entitysel._private.selLength;
         }
 
         if (Array.isArray(entities)) {
-          params.successCallback(rowData, length);
+          rowParams.successCallback(rowData, length);
         } else {
-          params.failCallback();
+          rowParams.failCallback();
         }
+        getSelectedRow(params.api);
       },
     });
   }, []);
