@@ -50,10 +50,12 @@ const AgGrid: FC<IAgGridProps> = ({
   rowVerticalPaddingScale,
   iconSize,
   style,
+  disabled = false,
   className,
   classNames = [],
 }) => {
   const { connect, emit } = useRenderer({
+    autoBindEvents: !disabled,
     omittedEvents: ['onselect', 'onclick', 'onheaderclick', 'oncellclick', 'onsavestate'],
   });
   const {
@@ -439,6 +441,7 @@ const AgGrid: FC<IAgGridProps> = ({
           onCellClicked={selectCell}
           onColumnHeaderClicked={selectHeader}
           theme={theme}
+          className={cn({ 'pointer-events-none opacity-40': disabled })}
         />
       ) : (
         <div className="flex h-full flex-col items-center justify-center rounded-lg border bg-purple-400 py-4 text-white">
