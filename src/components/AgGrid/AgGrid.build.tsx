@@ -28,6 +28,7 @@ const AgGrid: FC<IAgGridProps> = ({
   cellHorizontalPaddingScale,
   rowVerticalPaddingScale,
   iconSize,
+  disabled,
   style,
   className,
   classNames = [],
@@ -85,6 +86,7 @@ const AgGrid: FC<IAgGridProps> = ({
             columnDefs={colDefs}
             defaultColDef={defaultColDef}
             theme={theme}
+            className={cn({ 'pointer-events-none opacity-40': disabled })}
           />
         ) : (
           <div className="flex h-full flex-col items-center justify-center rounded-lg border bg-purple-400 py-4 text-white">
