@@ -90,6 +90,8 @@ The Qodly AG Grid component supports various events to handle user interactions:
 
 If you are familiar with CSS, you can easily style your component using AG Grid's default CSS selectors. AG Grid provides a variety of classes that you can target to customize the appearance of the grid, headers, rows, cells, pagination, and more.
 
+For more details: https://www.ag-grid.com/javascript-data-grid/theming-css/
+
 For example:
 
 ```CSS
@@ -198,6 +200,38 @@ self .ag-body-viewport::-webkit-scrollbar-thumb {
 
 self .ag-body-viewport::-webkit-scrollbar-thumb:hover {
     background: #0056b3;
+}
+
+/* Add animation */
+self .ag-header-cell-text {
+    background: linear-gradient(90deg, red, orange, yellow, green, blue, indigo, violet, red);
+    font-weight: 600;
+    font-size: 20px;
+    animation: animatedTextGradient 2.5s linear infinite;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-size: 200% auto;
+}
+
+@keyframes animatedTextGradient {
+    to {
+        background-position: -200% center;
+    }
+}
+```
+
+Or you can change the CSS variables :
+
+```CSS
+self {
+    /* override value of backgroundColor, foregroundColor and spacing parameters */
+    --ag-background-color: darkred;
+    --ag-foreground-color: lightpink;
+    --ag-spacing: 4px;
+    /* use dark scrollbars */
+    --ag-browser-color-scheme: dark;
+    /* use white text */
+    --ag-text-color: white;
 }
 ```
 
