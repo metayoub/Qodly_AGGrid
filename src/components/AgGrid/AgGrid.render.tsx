@@ -51,6 +51,7 @@ const AgGrid: FC<IAgGridProps> = ({
   iconSize,
   style,
   disabled = false,
+  saveLocalStorage,
   className,
   classNames = [],
 }) => {
@@ -223,16 +224,26 @@ const AgGrid: FC<IAgGridProps> = ({
   }, []);
 
   const stateUpdated = useCallback((params: StateUpdatedEvent) => {
-    if (stateDS && params.type === 'stateUpdated') {
-      stateDS.setValue(null, params.api.getColumnState());
-      emit('onsavestate', params.api.getColumnState());
+    if (params.type === 'stateUpdated' && !params.sources.includes('gridInitializing')) {
+      const columnState = params.api.getColumnState();
+      if (saveLocalStorage) {
+        localStorage.setItem(`gridState_${nodeID}`, JSON.stringify(columnState));
+      } else if (stateDS) {
+        stateDS.setValue(null, columnState);
+      }
+      emit('onsavestate', columnState);
     }
   }, []);
 
-  const getState = useCallback(async (params: GridReadyEvent) => {
-    if (stateDS) {
+  const getState = useCallback(async (params: any) => {
+    if (saveLocalStorage) {
+      const storedState = localStorage.getItem(`gridState_${nodeID}`);
+      if (storedState) {
+        params.api.applyColumnState({ state: JSON.parse(storedState), applyOrder: true });
+      }
+    } else if (stateDS) {
       const dsValue = await stateDS?.getValue();
-      params.api.applyColumnState({ state: dsValue });
+      params.api.applyColumnState({ state: dsValue, applyOrder: true });
     }
   }, []);
 
@@ -378,8 +389,6 @@ const AgGrid: FC<IAgGridProps> = ({
   }, []);
 
   const onGridReady = useCallback((params: GridReadyEvent) => {
-    getState(params);
-
     params.api.setGridOption('datasource', {
       getRows: async (rowParams: IGetRowsParams) => {
         let entities = null;
@@ -419,6 +428,7 @@ const AgGrid: FC<IAgGridProps> = ({
         getSelectedRow(params.api);
       },
     });
+    getState(params);
   }, []);
 
   return (

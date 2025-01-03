@@ -85,6 +85,12 @@ const dataAccessSettings: TSetting[] = [
     type: ESetting.DS_AUTO_SUGGEST,
   },
   {
+    key: 'saveLocalStorage',
+    label: 'Save In Local Storage',
+    type: ESetting.CHECKBOX,
+    defaultValue: false,
+  },
+  {
     key: 'serverSideRef',
     label: 'Server Side',
     type: ESetting.TEXT_FIELD,
