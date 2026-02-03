@@ -208,6 +208,8 @@ export default {
   defaultProps: {
     columns: [],
     state: '',
+    currentSelection: '',
+    multiSelection: false,
     saveLocalStorage: false,
     style: {
       height: '300px',
@@ -239,6 +241,8 @@ export default {
 export interface IAgGridProps extends webforms.ComponentProps {
   columns: IColumn[];
   state?: string;
+  currentSelection?: string;
+  multiSelection: boolean;
   saveLocalStorage: boolean;
   spacing: string;
   accentColor: string;

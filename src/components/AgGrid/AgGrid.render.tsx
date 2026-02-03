@@ -34,6 +34,7 @@ const AgGrid: FC<IAgGridProps> = ({
   datasource,
   columns,
   state = '',
+  currentSelection = '',
   spacing,
   accentColor,
   backgroundColor,
@@ -55,6 +56,7 @@ const AgGrid: FC<IAgGridProps> = ({
   iconSize,
   enableCellFocus,
   enableColumnHover,
+  multiSelection,
   style,
   disabled = false,
   saveLocalStorage,
@@ -102,6 +104,7 @@ const AgGrid: FC<IAgGridProps> = ({
 
   const path = useWebformPath();
   const stateDS = window.DataSource.getSource(state, path);
+  const currentSelectionDS = window.DataSource.getSource(currentSelection, path);
 
   const [selected, setSelected] = useState(-1);
   const [scrollIndex, setScrollIndex] = useState(0);
@@ -194,8 +197,6 @@ const AgGrid: FC<IAgGridProps> = ({
     setCount,
     fetchIndex,
     onDsChange: ({ length, selected }) => {
-      // TODO: bug when scroll on changed ds
-      console.log('onDsChange called with selected:', selected, 'and length:', length);
       if (!gridRef.current) return;
       gridRef.current.api?.refreshInfiniteCache();
       if (selected >= 0) {
@@ -221,7 +222,7 @@ const AgGrid: FC<IAgGridProps> = ({
   });
 
   const onRowClicked = useCallback(async (event: any) => {
-    if (!ds) return;
+    if (!ds || multiSelection) return;
     await updateCurrentDsValue({
       index: event.rowIndex,
     });
@@ -229,7 +230,7 @@ const AgGrid: FC<IAgGridProps> = ({
   }, []);
 
   const onRowDoubleClicked = useCallback(async (event: any) => {
-    if (!ds) return;
+    if (!ds || multiSelection) return;
     await updateCurrentDsValue({
       index: event.rowIndex,
     });
@@ -285,6 +286,14 @@ const AgGrid: FC<IAgGridProps> = ({
       value: event.value,
       key: event.event.key,
     });
+  }, []);
+
+  const onSelectionChanged = useCallback(async (event: any) => {
+    if (currentElement || !multiSelection) return; // handled by onRowClicked
+    if (!currentSelectionDS) return;
+
+    const selectedRows = event.api.getSelectedRows();
+    await currentSelectionDS.setValue(null, selectedRows);
   }, []);
 
   const onStateUpdated = useCallback((params: StateUpdatedEvent) => {
@@ -403,7 +412,6 @@ const AgGrid: FC<IAgGridProps> = ({
 
   const fetchData = useCallback(async (fetchCallback: any, params: IGetRowsParams) => {
     const entities = await fetchCallback(params.startRow, params.endRow - params.startRow);
-
     const rowData = entities.map((data: any) => {
       const row: any = {};
       columns.forEach((col) => {
@@ -416,6 +424,7 @@ const AgGrid: FC<IAgGridProps> = ({
 
   const getSelectedRow = useCallback(async (api: GridApi) => {
     // select current element
+    if (multiSelection) return;
     if (currentElement && selected === -1) {
       try {
         let index = -1;
@@ -507,10 +516,15 @@ const AgGrid: FC<IAgGridProps> = ({
           columnDefs={colDefs}
           defaultColDef={defaultColDef}
           onRowClicked={onRowClicked}
+          onSelectionChanged={onSelectionChanged}
           onRowDoubleClicked={onRowDoubleClicked}
           onGridReady={onGridReady}
           rowModelType="infinite"
-          rowSelection={{ mode: 'singleRow', enableClickSelection: true, checkboxes: false }}
+          rowSelection={{
+            mode: multiSelection ? 'multiRow' : 'singleRow',
+            enableClickSelection: !multiSelection,
+            checkboxes: multiSelection,
+          }}
           cacheBlockSize={100}
           maxBlocksInCache={10}
           cacheOverflowSize={2}

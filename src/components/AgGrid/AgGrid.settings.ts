@@ -80,6 +80,17 @@ const dataAccessSettings: TSetting[] = [
     type: ESetting.DS_AUTO_SUGGEST,
   },
   {
+    key: 'currentSelection',
+    label: 'Selected Selection',
+    type: ESetting.DS_AUTO_SUGGEST,
+  },
+  {
+    key: 'multiSelection',
+    label: 'Enable Multi-Selection',
+    type: ESetting.CHECKBOX,
+    defaultValue: false,
+  },
+  {
     key: 'state',
     label: 'State Source',
     type: ESetting.DS_AUTO_SUGGEST,
