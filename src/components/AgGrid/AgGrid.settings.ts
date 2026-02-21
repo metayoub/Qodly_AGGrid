@@ -1,5 +1,13 @@
-import { ESetting, TSetting } from '@ws-ui/webform-editor';
+import {
+  DEFAULT_ITERATOR,
+  ESetting,
+  ETextFieldModifier,
+  getStaticFeaturesExperimentalFlag,
+  TSetting,
+} from '@ws-ui/webform-editor';
 import { validateServerSide } from '@ws-ui/shared';
+
+const isI18nEnabled = getStaticFeaturesExperimentalFlag('i18n');
 
 const commonSettings: TSetting[] = [
   {
@@ -11,13 +19,15 @@ const commonSettings: TSetting[] = [
       {
         label: 'Title',
         defaultValue: '',
-        type: ESetting.TEXT_FIELD,
+        // type: ESetting.TEXT_FIELD,
         key: 'title',
+        type: isI18nEnabled ? ESetting.I18NFIELD : ESetting.TEXT_FIELD,
       },
       {
         label: 'Source',
         // defaultValue: '',
         type: ESetting.DS_AUTO_SUGGEST,
+        // datasourceProperty: 'datasource',
         key: 'source',
       },
       {
@@ -53,6 +63,12 @@ const commonSettings: TSetting[] = [
         key: 'filtering',
       },
       {
+        label: 'Hide column',
+        defaultValue: false,
+        type: ESetting.CHECKBOX,
+        key: 'hidden',
+      },
+      {
         label: 'Locked Position',
         defaultValue: false,
         type: ESetting.CHECKBOX,
@@ -78,6 +94,30 @@ const dataAccessSettings: TSetting[] = [
     key: 'currentElement',
     label: 'Selected Element',
     type: ESetting.DS_AUTO_SUGGEST,
+  },
+  {
+    key: 'iterator',
+    label: 'Iterate with',
+    type: ESetting.TEXT_FIELD,
+    modifier: ETextFieldModifier.ITERATOR,
+    placeholder: DEFAULT_ITERATOR,
+  },
+  {
+    key: 'currentSelection',
+    label: 'Selected Selection',
+    type: ESetting.DS_AUTO_SUGGEST,
+  },
+  {
+    key: 'multiSelection',
+    label: 'Enable Multi-Selection',
+    type: ESetting.CHECKBOX,
+    defaultValue: false,
+  },
+  {
+    label: 'Show AgGrid column actions',
+    defaultValue: false,
+    type: ESetting.CHECKBOX,
+    key: 'showColumnActions',
   },
   {
     key: 'state',
