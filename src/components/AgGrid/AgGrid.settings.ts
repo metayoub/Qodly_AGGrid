@@ -1,5 +1,13 @@
-import { ESetting, TSetting } from '@ws-ui/webform-editor';
+import {
+  DEFAULT_ITERATOR,
+  ESetting,
+  ETextFieldModifier,
+  getStaticFeaturesExperimentalFlag,
+  TSetting,
+} from '@ws-ui/webform-editor';
 import { validateServerSide } from '@ws-ui/shared';
+
+const isI18nEnabled = getStaticFeaturesExperimentalFlag('i18n');
 
 const commonSettings: TSetting[] = [
   {
@@ -11,13 +19,15 @@ const commonSettings: TSetting[] = [
       {
         label: 'Title',
         defaultValue: '',
-        type: ESetting.TEXT_FIELD,
+        // type: ESetting.TEXT_FIELD,
         key: 'title',
+        type: isI18nEnabled ? ESetting.I18NFIELD : ESetting.TEXT_FIELD,
       },
       {
         label: 'Source',
         // defaultValue: '',
         type: ESetting.DS_AUTO_SUGGEST,
+        // datasourceProperty: 'datasource',
         key: 'source',
       },
       {
@@ -53,6 +63,12 @@ const commonSettings: TSetting[] = [
         key: 'filtering',
       },
       {
+        label: 'Hide column',
+        defaultValue: false,
+        type: ESetting.CHECKBOX,
+        key: 'hidden',
+      },
+      {
         label: 'Locked Position',
         defaultValue: false,
         type: ESetting.CHECKBOX,
@@ -63,6 +79,13 @@ const commonSettings: TSetting[] = [
         defaultValue: true,
         type: ESetting.CHECKBOX,
         key: 'sizing',
+      },
+      {
+        label: 'Ref values (_r_/_R_)',
+        defaultValue: '',
+        type: ESetting.TEXT_FIELD,
+        key: 'refValues',
+        placeholder: 'e.g. 1,2,3',
       },
     ],
   },
@@ -80,15 +103,117 @@ const dataAccessSettings: TSetting[] = [
     type: ESetting.DS_AUTO_SUGGEST,
   },
   {
-    key: 'state',
-    label: 'State Source',
+    key: 'iterator',
+    label: 'Iterate with',
+    type: ESetting.TEXT_FIELD,
+    modifier: ETextFieldModifier.ITERATOR,
+    placeholder: DEFAULT_ITERATOR,
+  },
+  {
+    key: 'currentSelection',
+    label: 'Selected Selection',
     type: ESetting.DS_AUTO_SUGGEST,
   },
   {
-    key: 'saveLocalStorage',
-    label: 'Save In Local Storage',
+    key: 'multiSelection',
+    label: 'Enable Multi-Selection',
     type: ESetting.CHECKBOX,
     defaultValue: false,
+  },
+  {
+    label: 'Show AgGrid column actions',
+    defaultValue: false,
+    type: ESetting.CHECKBOX,
+    key: 'showColumnActions',
+  },
+  {
+    label: 'Show AgGrid copy actions',
+    defaultValue: false,
+    type: ESetting.CHECKBOX,
+    key: 'showCopyActions',
+  },
+  {
+    label: 'Show record count',
+    defaultValue: true,
+    type: ESetting.CHECKBOX,
+    key: 'showRecordCount',
+  },
+  {
+    key: 'dateFinancial',
+    label: 'Show fiscal year filter option',
+    type: ESetting.CHECKBOX,
+    defaultValue: false,
+  },
+  {
+    key: 'filterInactiveRecords',
+    label: 'Show filter inactive records option',
+    type: ESetting.CHECKBOX,
+    defaultValue: false,
+  },
+  {
+    label: 'Show row numbers',
+    defaultValue: false,
+    type: ESetting.CHECKBOX,
+    key: 'showRowNumbers',
+  },
+  {
+    label: 'Toolbar: Actions',
+    defaultValue: true,
+    type: ESetting.CHECKBOX,
+    key: 'showToolbarActions',
+  },
+  {
+    label: 'Toolbar: View',
+    defaultValue: true,
+    type: ESetting.CHECKBOX,
+    key: 'showToolbarView',
+  },
+  {
+    label: 'Toolbar: Sorting',
+    defaultValue: true,
+    type: ESetting.CHECKBOX,
+    key: 'showToolbarSorting',
+  },
+  {
+    label: 'Toolbar: Calculs statistique',
+    defaultValue: false,
+    type: ESetting.CHECKBOX,
+    key: 'showToolbarStatistics',
+  },
+  {
+    label: 'Toolbar: Calculated search',
+    defaultValue: false,
+    type: ESetting.CHECKBOX,
+    key: 'showToolbarCalculatedSearch',
+  },
+  {
+    label: 'Toolbar: Save view',
+    defaultValue: true,
+    type: ESetting.CHECKBOX,
+    key: 'showToolbarSaveView',
+  },
+  {
+    label: 'Toolbar: Saved views',
+    defaultValue: true,
+    type: ESetting.CHECKBOX,
+    key: 'showToolbarSavedViews',
+  },
+  {
+    label: 'Toolbar: Filtering',
+    defaultValue: true,
+    type: ESetting.CHECKBOX,
+    key: 'showToolbarFiltering',
+  },
+  {
+    key: 'calculStatistiqueResult',
+    label: 'Calculs statistique result (scalar)',
+    type: ESetting.DS_AUTO_SUGGEST,
+  },
+  {
+    key: 'rowCssField',
+    label: 'Row CSS Field',
+    type: ESetting.TEXT_FIELD,
+    placeholder: 'e.g. status',
   },
   {
     key: 'serverSideRef',
@@ -96,6 +221,63 @@ const dataAccessSettings: TSetting[] = [
     type: ESetting.TEXT_FIELD,
     hasError: validateServerSide,
     validateOnEnter: true,
+  },
+];
+
+const viewSettings: TSetting[] = [
+  {
+    key: 'view',
+    label: 'Current view (columnState)',
+    type: ESetting.DS_AUTO_SUGGEST,
+  },
+  {
+    key: 'views',
+    label: 'Saved views list',
+    type: ESetting.DS_AUTO_SUGGEST,
+  },
+];
+
+const filterSettings: TSetting[] = [
+  {
+    key: 'filter',
+    label: 'Current filter (filterModel)',
+    type: ESetting.DS_AUTO_SUGGEST,
+  },
+  {
+    key: 'filters',
+    label: 'Saved filters list',
+    type: ESetting.DS_AUTO_SUGGEST,
+  },
+];
+
+const sortSettings: TSetting[] = [
+  {
+    key: 'sort',
+    label: 'Current sort (sortModel)',
+    type: ESetting.DS_AUTO_SUGGEST,
+  },
+  {
+    key: 'sorts',
+    label: 'Saved sorts list',
+    type: ESetting.DS_AUTO_SUGGEST,
+  },
+];
+
+const calculatedSearchSettings: TSetting[] = [
+  {
+    key: 'calculatedSearch',
+    label: 'Current calculated search (object)',
+    type: ESetting.DS_AUTO_SUGGEST,
+  },
+  {
+    key: 'calculatedSearches',
+    label: 'Saved calculated searches list',
+    type: ESetting.DS_AUTO_SUGGEST,
+  },
+  {
+    key: 'relationTree',
+    label: 'Relation tree (available fields)',
+    type: ESetting.DS_AUTO_SUGGEST,
   },
 ];
 
@@ -437,6 +619,30 @@ const Settings: TSetting[] = [
     components: dataAccessSettings,
   },
   {
+    key: 'view',
+    label: 'View',
+    type: ESetting.GROUP,
+    components: viewSettings,
+  },
+  {
+    key: 'filter',
+    label: 'Filter',
+    type: ESetting.GROUP,
+    components: filterSettings,
+  },
+  {
+    key: 'sort',
+    label: 'Sort',
+    type: ESetting.GROUP,
+    components: sortSettings,
+  },
+  {
+    key: 'calculatedSearch',
+    label: 'Calculated search',
+    type: ESetting.GROUP,
+    components: calculatedSearchSettings,
+  },
+  {
     key: 'general',
     label: 'General',
     type: ESetting.GROUP,
@@ -470,6 +676,10 @@ const Settings: TSetting[] = [
 
 export const BasicSettings: TSetting[] = [
   ...dataAccessSettings,
+  ...viewSettings,
+  ...filterSettings,
+  ...sortSettings,
+  ...calculatedSearchSettings,
   ...commonSettings,
   ...basicSettings,
 ];

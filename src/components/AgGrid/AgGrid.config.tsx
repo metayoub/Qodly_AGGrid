@@ -39,6 +39,7 @@ export default {
     kind: EComponentKind.BASIC,
     props: {
       name: '',
+      iterable: true,
       classNames: [],
       events: [],
     },
@@ -52,62 +53,103 @@ export default {
       keys: [
         { name: 'datasource', require: true, isDatasource: true },
         { name: 'currentElement', require: false, isDatasource: false },
-        { name: 'state', require: false, isDatasource: false },
+        { name: 'view', require: false, isDatasource: false },
+        { name: 'views', require: false, isDatasource: false },
+        { name: 'filter', require: false, isDatasource: false },
+        { name: 'filters', require: false, isDatasource: false },
+        { name: 'sort', require: false, isDatasource: false },
+        { name: 'sorts', require: false, isDatasource: false },
+        { name: 'calculatedSearch', require: false, isDatasource: false },
+        { name: 'calculatedSearches', require: false, isDatasource: false },
+        { name: 'relationTree', require: false, isDatasource: false },
+        { name: 'calculStatistiqueResult', require: false, isDatasource: false },
       ],
     },
     displayName: 'AgGrid',
     exposed: true,
     icon: MdOutlineGridOn,
     events: [
-      {
-        label: 'On Row Click',
-        value: 'onrowclick',
-      },
-      {
-        label: 'On Row Double Click',
-        value: 'onrowdblclick',
-      },
-      {
-        label: 'On Header Click',
-        value: 'onheaderclick',
-      },
-      {
-        label: 'On Cell Click',
-        value: 'oncellclick',
-      },
-      {
-        label: 'On Cell Double Click',
-        value: 'oncelldblclick',
-      },
-      {
-        label: 'On Cell Key Down',
-        value: 'oncellkeydown',
-      },
-      {
-        label: 'On Cell Mouse Over',
-        value: 'oncellmouseover',
-      },
-      {
-        label: 'On Cell Mouse Out',
-        value: 'oncellmouseout',
-      },
-      {
-        label: 'On Cell Mouse Down',
-        value: 'oncellmousedown',
-      },
-      {
-        label: 'On SaveState',
-        value: 'onsavestate',
-      },
+      { label: 'On Row Click', value: 'onrowclick' },
+      { label: 'On Row Double Click', value: 'onrowdblclick' },
+      { label: 'On Header Click', value: 'onheaderclick' },
+      { label: 'On Cell Click', value: 'oncellclick' },
+      { label: 'On Cell Double Click', value: 'oncelldblclick' },
+      { label: 'On Cell Key Down', value: 'oncellkeydown' },
+      { label: 'On Cell Mouse Over', value: 'oncellmouseover' },
+      { label: 'On Cell Mouse Out', value: 'oncellmouseout' },
+      { label: 'On Cell Mouse Down', value: 'oncellmousedown' },
+
+      { label: 'On Save View', value: 'onsaveview' },
+      { label: 'On Load View', value: 'onloadview' },
+      { label: 'On Update View', value: 'onupdateview' },
+      { label: 'On Delete View', value: 'ondeleteview' },
+
+      { label: 'On Save Filter', value: 'onsavefilter' },
+      { label: 'On Load Filter', value: 'onloadfilter' },
+      { label: 'On Update Filter', value: 'onupdatefilter' },
+      { label: 'On Delete Filter', value: 'ondeletefilter' },
+
+      { label: 'On Save Sort', value: 'onsavesort' },
+      { label: 'On Load Sort', value: 'onloadsort' },
+      { label: 'On Update Sort', value: 'onupdatesort' },
+      { label: 'On Delete Sort', value: 'ondeletesort' },
+
+      { label: 'On Filter', value: 'onfilter' },
+      { label: 'On Sort', value: 'onsort' },
+
+      { label: 'On Calculs statistique', value: 'oncalculstatistique' },
+
+      { label: 'On Calculated search', value: 'oncalculatedsearch' },
+      { label: 'On Save Calculated search', value: 'onsavecalculatedsearch' },
+      { label: 'On Load Calculated search', value: 'onloadcalculatedsearch' },
+      { label: 'On Update Calculated search', value: 'onupdatecalculatedsearch' },
+      { label: 'On Delete Calculated search', value: 'ondeletecalculatedsearch' },
     ],
     datasources: {
       declarations: (props) => {
-        const { columns, currentElement = '', datasource = '' } = props;
+        const {
+          columns,
+          currentElement = '',
+          datasource = '',
+          view = '',
+          views = '',
+          filter = '',
+          filters = '',
+          sort = '',
+          sorts = '',
+          calculatedSearch = '',
+          calculatedSearches = '',
+          relationTree = '',
+          calculStatistiqueResult = '',
+        } = props as IExostiveElementProps & {
+          view?: string;
+          views?: string;
+          filter?: string;
+          filters?: string;
+          sort?: string;
+          sorts?: string;
+          calculatedSearch?: string;
+          calculatedSearches?: string;
+          relationTree?: string;
+          calculStatistiqueResult?: string;
+        };
         const declarations: T4DComponentDatasourceDeclaration[] = [
           { path: datasource, iterable: true },
         ];
         if (currentElement) {
           declarations.push({ path: currentElement });
+        }
+        if (view) declarations.push({ path: view });
+        if (views) declarations.push({ path: views, iterable: true });
+        if (filter) declarations.push({ path: filter });
+        if (filters) declarations.push({ path: filters, iterable: true });
+        if (sort) declarations.push({ path: sort });
+        if (sorts) declarations.push({ path: sorts, iterable: true });
+        if (calculatedSearch) declarations.push({ path: calculatedSearch });
+        if (calculatedSearches) declarations.push({ path: calculatedSearches, iterable: true });
+        if (relationTree) declarations.push({ path: relationTree, iterable: true });
+        if (calculStatistiqueResult?.trim()) {
+          declarations.push({ path: calculStatistiqueResult.trim() });
         }
         if (columns) {
           const { id: ds, namespace } = splitDatasourceID(datasource?.trim()) || {};
@@ -177,7 +219,9 @@ export default {
                     sorting: false,
                     filtering: false,
                     locked: false,
+                    hidden: false,
                     sizing: true,
+                    refValues: '',
                     id: generate(),
                     ...(item.attribute.type === 'image'
                       ? {
@@ -207,10 +251,19 @@ export default {
   },
   defaultProps: {
     columns: [],
-    state: '',
-    saveLocalStorage: false,
+    view: '',
+    views: '',
+    filter: '',
+    filters: '',
+    sort: '',
+    sorts: '',
+    dateFinancial: false,
+    filterInactiveRecords: false,
+    calculStatistiqueResult: '',
+    currentSelection: '',
+    multiSelection: false,
     style: {
-      height: '300px',
+      height: '600px',
     },
     spacing: '8px',
     accentColor: '#2196F3',
@@ -233,13 +286,51 @@ export default {
     cellHorizontalPaddingScale: 1.3,
     rowVerticalPaddingScale: 1.2,
     iconSize: '16px',
+    rowCssField: '',
+    showToolbarActions: true,
+    showToolbarView: true,
+    showToolbarSorting: true,
+    showToolbarFiltering: true,
+    showToolbarStatistics: false,
+    showToolbarCalculatedSearch: false,
+    showToolbarSaveView: true,
+    showToolbarSavedViews: true,
+    showRecordCount: true,
+    showRowNumbers: false,
   },
 } as T4DComponentConfig<IAgGridProps>;
 
 export interface IAgGridProps extends webforms.ComponentProps {
   columns: IColumn[];
-  state?: string;
-  saveLocalStorage: boolean;
+  /** Scalar object: live `columnState` (order / width / pinning / hide). */
+  view?: string;
+  /** Scalar array: saved list of named views (columnState). */
+  views?: string;
+  /** Scalar object: live `filterModel` (+ companion toggles persisted with it). */
+  filter?: string;
+  /** Scalar array: saved list of named filters. */
+  filters?: string;
+  /** Scalar object: live `sortModel`. */
+  sort?: string;
+  /** Scalar array: saved list of named sorts. */
+  sorts?: string;
+  /** Scalar object: live calculated-search draft / state. */
+  calculatedSearch?: string;
+  /** Scalar array: saved list of named calculated-search formats. */
+  calculatedSearches?: string;
+  /** Scalar array: relation tree for “Available fields” in calculated search. */
+  relationTree?: string;
+  /** When true, show the fiscal-year checkbox in advanced / header filters (runtime value is emitted on `onfilter`, not injected into the query here). */
+  dateFinancial?: boolean;
+  /** When true, show “filter inactive records” in advanced / header filters; runtime checkbox state is emitted on `onfilter`. */
+  filterInactiveRecords?: boolean;
+  /**
+   * Scalar datasource that receives the **On Calculs statistique** method result (same binding as the event’s return in Studio).
+   * `emit()` does not return the server value; the grid reads it from this source after the event runs.
+   */
+  calculStatistiqueResult?: string;
+  currentSelection?: string;
+  multiSelection: boolean;
   spacing: string;
   accentColor: string;
   backgroundColor: string;
@@ -261,6 +352,29 @@ export interface IAgGridProps extends webforms.ComponentProps {
   iconSize: string;
   enableCellFocus?: boolean;
   enableColumnHover?: boolean;
+  showColumnActions?: boolean;
+  showCopyActions: boolean;
+  /** Toolbar: Actions slot (agGridActions) */
+  showToolbarActions?: boolean;
+  /** Toolbar: View (customize columns, reset default view) */
+  showToolbarView?: boolean;
+  /** Toolbar: Advanced sorting */
+  showToolbarSorting?: boolean;
+  /** Toolbar: Advanced filtering (named filter sets) */
+  showToolbarFiltering?: boolean;
+  /** Toolbar: Calculs statistique (numeric column aggregates) */
+  showToolbarStatistics?: boolean;
+  /** Toolbar: Calculated search (opens modal) */
+  showToolbarCalculatedSearch?: boolean;
+  /** Toolbar: Save new view */
+  showToolbarSaveView?: boolean;
+  /** Toolbar: Load / overwrite / delete saved views */
+  showToolbarSavedViews?: boolean;
+  /** Show total row count below the toolbar (matches the bound datasource selection length after fetch). */
+  showRecordCount?: boolean;
+  /** Pinned left row index column (not part of Columns / saved colDef). */
+  showRowNumbers?: boolean;
+  rowCssField?: string;
 }
 
 export interface IColumn {
@@ -269,10 +383,12 @@ export interface IColumn {
   sorting: boolean;
   filtering: boolean;
   locked: boolean;
+  hidden: boolean;
   sizing: boolean;
   width: number;
   format: string;
   id: string;
   dataType: string;
   flex: number;
+  refValues?: string;
 }
